@@ -21,8 +21,14 @@ Hooks are often overlooked because they live outside the prompt. They don't seem
 Riphook works with **pnpm** or **npm**.
 
 ```bash
+# Clone the repository
+git clone https://github.com/merciagents/riphook.git
+cd riphook
+# Install dependencies
 pnpm install
 ```
+
+This sets up the hooks for Cursor, Claude Code, and OpenClaw automatically.
 
 If you don’t have pnpm:
 
@@ -41,6 +47,7 @@ npm install
 - Writes `.cursor/hooks.json` and `~/.cursor/hooks.json` to point Cursor hooks at `dist/cursor/entry.js`.
 - Writes `.claude/settings.json` and `~/.claude/settings.json` to point Claude hooks at `dist/claude/entry.js`.
 - If `openclaw` is installed, registers the plugin locally and updates `~/.openclaw/config.json` (and `openclaw.json` if present).
+- Existing user hooks are preserved; Riphook merges into your current hook lists.
 
 Hook command:
 - Hooks run as `node <entry>` for reliability.
