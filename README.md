@@ -1,6 +1,8 @@
 # Riphook
 
-Riphook is a security hook suite for Cursor, Claude Code, and OpenClaw. It blocks risky tool calls, detects secrets/PII, and runs static analysis on edited files to help keep agent runs safe by default.
+Riphook is a security hook suite for Cursor, Claude Code, and OpenClaw. It blocks risky tool calls, detects secrets/PII, and runs static analysis on edited files to help keep agent runs safe by default. 
+
+It also emits **Cursor agent-trace–compatible logs** (https://agent-trace.dev/), providing you a clear context-graph, so you can visualize agent behavior, human collaboration, tool usage, and points of failure.
 
 ## Why Hooks (Not Just Prompts)
 
@@ -14,7 +16,7 @@ Hooks are often overlooked because they live outside the prompt. They don't seem
 - **Secret detection**: scans prompts, tool params, file reads, and tool outputs.
 - **PII detection**: credit cards, emails, SSNs, and phone-like patterns (OpenClaw + others).
 - **Dangerous command blocking**: blocks dangerous shell/SQL patterns (rm -rf, drop table, etc).
-- **Audit trail**: emits agent-trace records for prompts, tools, shells, and session lifecycle.
+- **Audit trail**: emits agent-trace records for prompts, tools, shells, and session lifecycle. Logs follow the Cursor agent-trace specification, enabling visualizations of agent flows, human+agent collaboration, and failure hotspots.
 
 ## Install
 
