@@ -124,7 +124,6 @@ function installCursorHooks() {
   ];
 
   const hookTargets = [
-    path.join(repoRoot, ".cursor", "hooks.json"),
     path.join(homeDir, ".cursor", "hooks.json"),
   ];
 
@@ -151,7 +150,6 @@ function installCursorHooks() {
 
 function installClaudeHooks() {
   const settingsTargets = [
-    path.join(repoRoot, ".claude", "settings.json"),
     path.join(homeDir, ".claude", "settings.json"),
   ];
 
