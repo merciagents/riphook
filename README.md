@@ -111,4 +111,5 @@ The current implementation of Riphook is a work in progress, and we are constant
 - **Static analysis limits**: Semgrep rules won’t catch every bug or vulnerability.
 - **Agent/session failures**: if an agent crashes or is interrupted, some edits or stop-time scans may not run.
 
+
 ## We will be releasing an advanced version of our system soon - advance deterministic security, support for any general long running agent, dashboard for easy access to non developers, etc. stay tuned. 
