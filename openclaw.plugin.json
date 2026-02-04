@@ -1,6 +1,6 @@
 {
-  "id": "hooks-project",
-  "name": "HooksProject",
+  "id": "riphook",
+  "name": "Riphook",
   "description": "Security plugin for secrets and destructive commands",
   "version": "1.0.0",
   "configSchema": {

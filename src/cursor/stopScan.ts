@@ -25,7 +25,7 @@ function createStopTrace(
       transcript: hookInput.transcript_path as string | undefined,
       metadata: {
         event: "stop_hook_executed",
-        tool: "hooks-project",
+        tool: "riphook",
         conversation_id: hookInput.conversation_id,
         generation_id: hookInput.generation_id,
         status,
@@ -123,7 +123,7 @@ function runStopScan(hookInput: Record<string, unknown>): Record<string, unknown
               transcript: hookInput.transcript_path as string | undefined,
               metadata: {
                 event: "vulnerability_detected",
-                tool: "hooks-project",
+                tool: "riphook",
                 scanner: "semgrep",
                 conversation_id: hookInput.conversation_id,
                 generation_id: hookInput.generation_id,

@@ -5,6 +5,7 @@ import {
   scanText,
   SecretFinding,
 } from "../core/secretScan.js";
+import { extractShellReadPaths } from "../core/shellRead.js";
 import { logSecretDetection } from "../core/secretTrace.js";
 import { validateCommand, validateToolInput } from "../core/security.js";
 import { runStopScan } from "./stopScan.js";
@@ -389,6 +390,34 @@ function runCursorHook(rawInput: string): { output: string; exitCode: number } {
     const command = String(hookInput.command ?? "");
     const security = validateCommand(command);
     const findings = command.trim() ? scanText(command, "[shell command]") : [];
+    const workspaceRoots = (hookInput.workspace_roots as string[]) ?? [];
+    const baseDir =
+      typeof hookInput.cwd === "string" && hookInput.cwd.trim()
+        ? hookInput.cwd
+        : undefined;
+    const readPaths = extractShellReadPaths(command, baseDir, workspaceRoots);
+    for (const readPath of readPaths) {
+      try {
+        findings.push(...scanFile(readPath));
+      } catch {
+        // ignore unreadable files
+      }
+    }
+    if (findings.length > 0) {
+      logSecretDetection({
+        findings,
+        hookInput,
+        eventName,
+        context: "secret_detected_before_read",
+      });
+      const message = buildFindingsMessage(findings, "SECRET DETECTED (file read blocked)");
+      return {
+        output: JSON.stringify(
+          formatCursorResponse({ action: "block", message, eventName }),
+        ),
+        exitCode: 2,
+      };
+    }
     const result = combineSecurityAndSecrets(security, findings, {
       eventName,
       hookInput,

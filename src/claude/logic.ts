@@ -5,6 +5,7 @@ import {
   scanText,
   SecretFinding,
 } from "../core/secretScan.js";
+import { extractShellReadPaths } from "../core/shellRead.js";
 import { validateCommand, validateToolInput } from "../core/security.js";
 import { logSecretDetection } from "../core/secretTrace.js";
 import { appendEditedFilePath } from "../core/editedFilesCache.js";
@@ -173,6 +174,31 @@ function handlePreToolUse(input: Record<string, unknown>): Record<string, unknow
       const message = buildFindingsMessage(
         findings,
         "SECRET DETECTED (command execution blocked)",
+      );
+      return formatPreToolDecision("deny", message, message);
+    }
+
+    const baseDir =
+      typeof input.cwd === "string" && input.cwd.trim() ? String(input.cwd) : undefined;
+    const readPaths = extractShellReadPaths(command, baseDir);
+    const fileFindings: SecretFinding[] = [];
+    for (const readPath of readPaths) {
+      try {
+        fileFindings.push(...scanFile(readPath));
+      } catch {
+        // ignore unreadable files
+      }
+    }
+    if (fileFindings.length > 0) {
+      logSecretDetection({
+        findings: fileFindings,
+        hookInput: input,
+        eventName: "PreToolUse",
+        context: "secret_detected_before_read",
+      });
+      const message = buildFindingsMessage(
+        fileFindings,
+        "SECRET DETECTED (file read blocked)",
       );
       return formatPreToolDecision("deny", message, message);
     }

@@ -346,7 +346,7 @@ function handleBeforeSubmitPrompt(input: Record<string, unknown>): void {
   };
 
   if (isSecurityFollowup) {
-    metadata.source = "hooks-project";
+    metadata.source = "riphook";
     metadata.source_hook = "stop";
   }
 

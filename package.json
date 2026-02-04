@@ -1,5 +1,5 @@
 {
-  "name": "hooks-project",
+  "name": "riphook",
   "version": "1.0.0",
   "description": "Cursor, Claude Code, and OpenClaw security hooks (secrets, logging, static analysis)",
   "type": "module",

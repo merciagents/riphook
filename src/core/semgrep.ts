@@ -4,21 +4,68 @@ import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-function getSemgrepPath(): string | null {
-  const repoRoot = path.resolve(
-    path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", ".."),
-  );
-  const venvBin = process.platform === "win32" ? "Scripts" : "bin";
-  const venvSemgrep = path.join(repoRoot, ".venv", venvBin, process.platform === "win32" ? "semgrep.exe" : "semgrep");
+function findRepoRoot(startDir: string): string | null {
+  let current = path.resolve(startDir);
+  while (true) {
+    if (fs.existsSync(path.join(current, "package.json")) || fs.existsSync(path.join(current, ".git"))) {
+      return current;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
 
-  const candidates = [
-    venvSemgrep,
-    process.env.SEMGREP_PATH,
-    path.join(process.cwd(), "node_modules", ".bin", "semgrep"),
-    path.join(os.homedir(), ".local", "bin", "semgrep"),
-    "/usr/local/bin/semgrep",
-    "/opt/homebrew/bin/semgrep",
+function getSemgrepPath(): string | null {
+  const venvBin = process.platform === "win32" ? "Scripts" : "bin";
+  const semgrepExe = process.platform === "win32" ? "semgrep.exe" : "semgrep";
+  const cwd = process.cwd();
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  const repoRootFromScript = findRepoRoot(scriptDir);
+  const repoRootFromCwd = findRepoRoot(cwd);
+
+  const candidates: string[] = [];
+  const addCandidate = (candidate?: string | null) => {
+    if (!candidate) return;
+    if (!candidates.includes(candidate)) candidates.push(candidate);
+  };
+
+  addCandidate(process.env.SEMGREP_PATH);
+
+  const envVenvs = [
+    process.env.VIRTUAL_ENV,
+    process.env.CONDA_PREFIX,
+    process.env.PYENV_VIRTUAL_ENV,
   ].filter(Boolean) as string[];
+
+  for (const envVenv of envVenvs) {
+    addCandidate(path.join(envVenv, venvBin, semgrepExe));
+  }
+
+  addCandidate(path.join(cwd, ".venv", venvBin, semgrepExe));
+
+  const workspaceRoots = [
+    process.env.CURSOR_PROJECT_DIR,
+    process.env.CLAUDE_PROJECT_DIR,
+  ].filter(Boolean) as string[];
+  for (const root of workspaceRoots) {
+    addCandidate(path.join(root, ".venv", venvBin, semgrepExe));
+  }
+
+  if (repoRootFromCwd) {
+    addCandidate(path.join(repoRootFromCwd, ".venv", venvBin, semgrepExe));
+    addCandidate(path.join(repoRootFromCwd, "node_modules", ".bin", semgrepExe));
+  }
+
+  if (repoRootFromScript) {
+    addCandidate(path.join(repoRootFromScript, ".venv", venvBin, semgrepExe));
+    addCandidate(path.join(repoRootFromScript, "node_modules", ".bin", semgrepExe));
+  }
+
+  addCandidate(path.join(cwd, "node_modules", ".bin", semgrepExe));
+  addCandidate(path.join(os.homedir(), ".local", "bin", semgrepExe));
+  addCandidate("/usr/local/bin/semgrep");
+  addCandidate("/opt/homebrew/bin/semgrep");
 
   for (const candidate of candidates) {
     if (candidate && fs.existsSync(candidate)) return candidate;
@@ -26,7 +73,7 @@ function getSemgrepPath(): string | null {
 
   const pathEntries = (process.env.PATH ?? "").split(path.delimiter);
   for (const entry of pathEntries) {
-    const target = path.join(entry, "semgrep");
+    const target = path.join(entry, semgrepExe);
     if (fs.existsSync(target)) return target;
   }
 
@@ -48,7 +95,7 @@ function runSemgrepScan(args: string[]): {
   const semgrepPath = getSemgrepPath();
   if (!semgrepPath) throw new Error("Failed to find semgrep binary");
 
-  const env = { ...process.env, SEMGREP_LOG_SRCS: "hooks-project" };
+  const env = { ...process.env, SEMGREP_LOG_SRCS: "riphook" };
   const result = spawnSync(semgrepPath, args, {
     encoding: "utf8",
     env,

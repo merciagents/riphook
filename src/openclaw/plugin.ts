@@ -2,11 +2,12 @@
 type OpenClawPluginApi = any;
 
 import { scanFile, scanText } from "../core/secretScan.js";
+import { extractShellReadPaths } from "../core/shellRead.js";
 import { logSecretDetection } from "../core/secretTrace.js";
 import { validateCommand, validateToolInput } from "../core/security.js";
 import { containsPii } from "../core/pii.js";
 
-const PLUGIN_ID = "hooks-project";
+const PLUGIN_ID = "riphook";
 
 function extractFilePath(params: Record<string, unknown>): string | undefined {
   return (
@@ -60,7 +61,7 @@ export default {
               hookInput: { session_key: ctx?.sessionKey },
               eventName: "before_tool_call",
               context: "secret_detected_in_command",
-              toolLabel: "hooks-project-openclaw",
+              toolLabel: "riphook-openclaw",
             });
             return {
               block: true,
@@ -71,6 +72,33 @@ export default {
             return {
               block: true,
               blockReason: "PII detected in command",
+            };
+          }
+
+          const baseDir =
+            typeof params.cwd === "string" && params.cwd.trim()
+              ? String(params.cwd)
+              : undefined;
+          const readPaths = extractShellReadPaths(command, baseDir);
+          const fileFindings = [];
+          for (const readPath of readPaths) {
+            try {
+              fileFindings.push(...scanFile(readPath));
+            } catch {
+              // ignore unreadable files
+            }
+          }
+          if (fileFindings.length > 0) {
+            logSecretDetection({
+              findings: fileFindings,
+              hookInput: { session_key: ctx?.sessionKey },
+              eventName: "before_tool_call",
+              context: "secret_detected_before_read",
+              toolLabel: "riphook-openclaw",
+            });
+            return {
+              block: true,
+              blockReason: "Secret detected in file read",
             };
           }
         }
@@ -85,7 +113,7 @@ export default {
                 hookInput: { session_key: ctx?.sessionKey },
                 eventName: "before_tool_call",
                 context: "secret_detected_before_read",
-                toolLabel: "hooks-project-openclaw",
+                toolLabel: "riphook-openclaw",
               });
               return {
                 block: true,
@@ -104,7 +132,7 @@ export default {
             hookInput: { session_key: ctx?.sessionKey },
             eventName: "before_tool_call",
             context: "secret_detected_in_params",
-            toolLabel: "hooks-project-openclaw",
+            toolLabel: "riphook-openclaw",
           });
           return {
             block: true,

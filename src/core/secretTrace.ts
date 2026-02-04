@@ -37,7 +37,7 @@ function logSecretDetection(options: {
         transcript: transcriptPath,
         metadata: {
           event: context,
-          tool: toolLabel ?? "hooks-project",
+          tool: toolLabel ?? "riphook",
           scanner: "secret-scan",
           hook_event: eventName,
           conversation_id: conversationId,

@@ -11,7 +11,6 @@ export type RangePosition = { start_line: number; end_line: number };
 export type TraceMetadata = Record<string, unknown>;
 
 function getWorkspaceRoot(): string {
-  if (process.env.RIPHOOK_ROOT) return process.env.RIPHOOK_ROOT;
   if (process.env.CURSOR_PROJECT_DIR) return process.env.CURSOR_PROJECT_DIR;
   if (process.env.CLAUDE_PROJECT_DIR) return process.env.CLAUDE_PROJECT_DIR;
 
@@ -42,7 +41,7 @@ function getToolInfo(): { name: string; version?: string } {
   if (process.env.CLAUDE_PROJECT_DIR) {
     return { name: "claude-code" };
   }
-  return { name: "hooks-project", version: "1.0.0" };
+  return { name: "riphook", version: "1.0.0" };
 }
 
 function getVcsInfo(cwd: string): { type: string; revision: string } | null {

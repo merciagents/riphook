@@ -9,10 +9,8 @@ const distCursorEntry = path.join(repoRoot, "dist", "cursor", "entry.js");
 const distClaudeEntry = path.join(repoRoot, "dist", "claude", "entry.js");
 const homeDir = os.homedir();
 const venvDir = path.join(repoRoot, ".venv");
-
 function resolveHookCommand(entryPath) {
-  const root = process.cwd();
-  return `RIPHOOK_ROOT=${root} ${process.execPath} ${entryPath}`;
+  return `${process.execPath} ${entryPath}`;
 }
 
 function readJson(filePath, fallback) {
@@ -205,7 +203,7 @@ function installOpenClaw() {
     const entries = config.plugins?.entries ?? {};
     delete entries.clawsentinel;
     delete entries.clawguardian;
-    entries["hooks-project"] = entries["hooks-project"] ?? { enabled: true, config: {} };
+    entries["riphook"] = entries["riphook"] ?? { enabled: true, config: {} };
     config.plugins = config.plugins ?? {};
     config.plugins.entries = entries;
     writeJson(configPath, config);
