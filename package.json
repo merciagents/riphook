@@ -1,0 +1,35 @@
+{
+  "name": "hooks-project",
+  "version": "1.0.0",
+  "description": "Cursor, Claude Code, and OpenClaw security hooks (secrets, logging, static analysis)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test:types": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "postinstall": "node scripts/install.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.8",
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.18"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/openclaw/index.js"
+    ]
+  }
+}

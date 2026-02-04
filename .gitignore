@@ -1,0 +1,25 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+coverage/
+.env
+.vscode/
+.idea/
+*.tsbuildinfo
+
+# venv
+.venv/
+
+# Generated traces
+.agent-trace/
+
+# pnpm artifacts
+pnpm-debug.log
+
+# Cursor/Claude/OpenClaw local configs
+.cursor/
+.claude/
+
+# OS
+Thumbs.db
