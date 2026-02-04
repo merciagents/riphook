@@ -4,13 +4,13 @@ Riphook is a security hook suite for Cursor, Claude Code, and OpenClaw. It block
 
 ## Why Hooks (Not Just Prompts)
 
-Prompts, `SKILLS.md`, and MCP servers are helpful—but they are **advisory**. An agent can ignore or misinterpret them. Or not even choose to call them. Hooks are **deterministic enforcement**: they intercept tool calls, reads, and outputs and can block actions regardless of what the prompt says. That makes hooks a much more reliable control layer for safety.
+Prompts, `SKILLS.md`, and MCP servers are helpful, but they are **advisory**. An agent can ignore or misinterpret them. Or not even choose to call them. Hooks are **deterministic enforcement**: they intercept tool calls, reads, and outputs and can block actions regardless of what the prompt says. That makes hooks a much more reliable control layer for safety.
 
 Hooks are often overlooked because they live outside the prompt. They don't seem cool enough.  However, they are the most reliable control layer for safety. They run at the system boundary, where the agent actually executes tools.
 
 ## Features
 
-- **Static analysis**: runs static analysis on edited files at stop (Cursor + Claude).
+- **Secure code generation**: static analysis runs on edited files and hooks enforce findings, ensuring agents comply with security detections (Cursor + Claude). As the static analysis is run everytime an agent completes execution, and its result fed back to the agent if an issue is detected, it ensures that the agent can not stop execution until the issue is resolved.
 - **Secret detection**: scans prompts, tool params, file reads, and tool outputs.
 - **PII detection**: credit cards, emails, SSNs, and phone-like patterns (OpenClaw + others).
 - **Dangerous command blocking**: blocks dangerous shell/SQL patterns (rm -rf, drop table, etc).
@@ -100,3 +100,11 @@ Then add to `~/.openclaw/config.json`:
 npm run build
 npm test
 ```
+
+## More to come
+
+The current implementation of Riphook is a work in progress, and we are constantly improving it. Here are some of the known limitations that will be addressed soon in a better version of our tool:
+
+- **Regex-based detections**: secret/PII detection uses regex and can miss or misclassify.
+- **Static analysis limits**: Semgrep rules won’t catch every bug or vulnerability.
+- **Agent/session failures**: if an agent crashes or is interrupted, some edits or stop-time scans may not run.
