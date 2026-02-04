@@ -4,6 +4,8 @@ Riphook is a security hook suite for Cursor, Claude Code, and OpenClaw. It block
 
 It also emits **Cursor agent-trace–compatible logs** (https://agent-trace.dev/), providing you a clear context-graph, so you can visualize agent behavior, human collaboration, tool usage, and points of failure.
 
+![Riphook logo](./assets/riphook.png)
+
 ## Why Hooks (Not Just Prompts)
 
 Prompts, `SKILLS.md`, and MCP servers are helpful, but they are **advisory**. An agent can ignore or misinterpret them. Or not even choose to call them. Hooks are **deterministic enforcement**: they intercept tool calls, reads, and outputs and can block actions regardless of what the prompt says. That makes hooks a much more reliable control layer for safety.
