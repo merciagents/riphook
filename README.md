@@ -108,12 +108,12 @@ npm test
 The current implementation of Riphook is a work in progress, and we are constantly improving it. Here are some of the known limitations that will be addressed soon in a better version of our tool:
 
 - **Regex-based detections**: secret/PII detection uses regex and can miss or misclassify.
-- **Static analysis limits**: Semgrep rules won’t catch every bug or vulnerability.
+- **Static analysis limits**: Semgrep rules won’t catch every bug or vulnerability. Also it is fairly slow.
 - **Agent/session failures**: if an agent crashes or is interrupted, some edits or stop-time scans may not run.
-- **Multipl ways to do the same thing**: If a tool is blocked, Cursor has multiple ways to override the block. We are working on a more complete handling of these other capabilities.
+- **Multiple ways to do the same thing**: If a tool is blocked, Cursor has multiple ways to override the block. We are working on a more complete handling of these other capabilities.
 
 
-We will be releasing an advanced version of our system soon - advance deterministic security, support for any general long running agent, dashboard for easy access to non developers, etc.
+We will be releasing an advanced version of our system soon - faster, more accurate deterministic security, support for any general long running agent, dashboard for easy access to non developers, etc.
 
 Known Issues:
 - Cursor Read File hooks are not always fired properly: https://forum.cursor.com/t/hook-beforereadfile-does-not-work-in-the-agent/150520

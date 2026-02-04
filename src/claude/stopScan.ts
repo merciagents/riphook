@@ -57,12 +57,16 @@ function runClaudeStopScan(
 
     tempDir = createTempFilesFromCodeContent(validatedFiles);
     const args = getSemgrepScanArgs(tempDir, null);
-    const { returncode, stdout, stderr } = runSemgrepScan(args);
+    const { returncode, stdout, stderr, semgrepPath } = runSemgrepScan(args);
 
     if (returncode !== 0) {
-      createStopTrace(hookInput, "scan_failed", { error: stderr.slice(0, 500) });
+      const errorText = stderr || stdout || "Unknown semgrep error";
+      createStopTrace(hookInput, "scan_failed", {
+        error: errorText.slice(0, 500),
+        semgrep_path: semgrepPath,
+      });
       return {
-        systemMessage: `Semgrep scan encountered errors: ${stderr.slice(0, 500)}`,
+        systemMessage: `Semgrep scan encountered errors: ${errorText.slice(0, 500)} (semgrep: ${semgrepPath})`,
       };
     }
 

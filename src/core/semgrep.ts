@@ -21,7 +21,7 @@ function getSemgrepPath(): string | null {
   const semgrepExe = process.platform === "win32" ? "semgrep.exe" : "semgrep";
   const cwd = process.cwd();
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const repoRootFromScript = findRepoRoot(scriptDir);
+  const repoRootFromScript = findRepoRoot(scriptDir) ?? path.resolve(scriptDir, "..", "..");
   const repoRootFromCwd = findRepoRoot(cwd);
 
   const candidates: string[] = [];
@@ -87,24 +87,113 @@ function getSemgrepScanArgs(tempDir: string, config?: string | null): string[] {
   return args;
 }
 
+function getVenvPythonFromSemgrepPath(semgrepPath: string): string | null {
+  const venvBin = process.platform === "win32" ? "Scripts" : "bin";
+  const pythonExe = process.platform === "win32" ? "python.exe" : "python";
+  const parts = semgrepPath.split(path.sep);
+  const venvIndex = parts.lastIndexOf(".venv");
+  if (venvIndex === -1) return null;
+  const venvRoot = parts.slice(0, venvIndex + 1).join(path.sep);
+  const pythonPath = path.join(venvRoot, venvBin, pythonExe);
+  return fs.existsSync(pythonPath) ? pythonPath : null;
+}
+
+function getVenvBinFromSemgrepPath(semgrepPath: string): string | null {
+  const parts = semgrepPath.split(path.sep);
+  const venvIndex = parts.lastIndexOf(".venv");
+  if (venvIndex === -1) return null;
+  const venvRoot = parts.slice(0, venvIndex + 1).join(path.sep);
+  const venvBin = process.platform === "win32" ? "Scripts" : "bin";
+  const binPath = path.join(venvRoot, venvBin);
+  return fs.existsSync(binPath) ? binPath : null;
+}
+
+function repairSemgrepShebang(semgrepPath: string, venvPython: string): boolean {
+  if (process.platform === "win32") return false;
+  try {
+    const stat = fs.statSync(semgrepPath);
+    const original = fs.readFileSync(semgrepPath, "utf8");
+    const lines = original.split("\n");
+    if (lines.length === 0) return false;
+    if (!lines[0].startsWith("#!")) return false;
+    lines[0] = `#!${venvPython}`;
+    fs.writeFileSync(semgrepPath, lines.join("\n"), "utf8");
+    fs.chmodSync(semgrepPath, stat.mode);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function repairPySemgrepShebang(semgrepPath: string, venvPython: string): boolean {
+  if (process.platform === "win32") return false;
+  try {
+    const venvBin = getVenvBinFromSemgrepPath(semgrepPath);
+    if (!venvBin) return false;
+    const pysemgrepPath = path.join(venvBin, "pysemgrep");
+    if (!fs.existsSync(pysemgrepPath)) return false;
+    const stat = fs.statSync(pysemgrepPath);
+    const original = fs.readFileSync(pysemgrepPath, "utf8");
+    const lines = original.split("\n");
+    if (lines.length === 0) return false;
+    if (!lines[0].startsWith("#!")) return false;
+    lines[0] = `#!${venvPython}`;
+    fs.writeFileSync(pysemgrepPath, lines.join("\n"), "utf8");
+    fs.chmodSync(pysemgrepPath, stat.mode);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function runSemgrepScan(args: string[]): {
   returncode: number;
   stdout: string;
   stderr: string;
+  semgrepPath: string;
 } {
   const semgrepPath = getSemgrepPath();
   if (!semgrepPath) throw new Error("Failed to find semgrep binary");
 
-  const env = { ...process.env, SEMGREP_LOG_SRCS: "riphook" };
-  const result = spawnSync(semgrepPath, args, {
+  const env: NodeJS.ProcessEnv = { ...process.env, SEMGREP_LOG_SRCS: "riphook" };
+  const venvBin = getVenvBinFromSemgrepPath(semgrepPath);
+  if (venvBin) {
+    const existingPath = env.PATH ?? "";
+    env.PATH = `${venvBin}${path.delimiter}${existingPath}`;
+  }
+
+  const venvPython = getVenvPythonFromSemgrepPath(semgrepPath);
+  if (venvPython) {
+    repairSemgrepShebang(semgrepPath, venvPython);
+    repairPySemgrepShebang(semgrepPath, venvPython);
+  }
+  let result = spawnSync(semgrepPath, args, {
     encoding: "utf8",
     env,
   });
+
+  const spawnError = result.error as NodeJS.ErrnoException | undefined;
+  if (
+    result.status !== 0 &&
+    (result.stderr?.includes("bad interpreter") ||
+      result.stderr?.includes("execvp pysemgrep") ||
+      spawnError?.code === "ENOENT")
+  ) {
+    if (venvPython) {
+      repairSemgrepShebang(semgrepPath, venvPython);
+      repairPySemgrepShebang(semgrepPath, venvPython);
+      result = spawnSync(semgrepPath, args, {
+        encoding: "utf8",
+        env,
+      });
+    }
+  }
 
   return {
     returncode: result.status ?? 1,
     stdout: result.stdout ?? "",
     stderr: result.stderr ?? "",
+    semgrepPath,
   };
 }
 
