@@ -4,6 +4,31 @@ Riphook is a security hook suite for Cursor, Claude Code, and OpenClaw. It block
 
 It also emits **Cursor agent-trace–compatible logs** (https://agent-trace.dev/), providing you a clear context-graph, so you can visualize agent behavior, human collaboration, tool usage, and points of failure.
 
+# Quick Start 
+
+(Linux/macOS/Windows via Git Bash or WSL):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/merciagents/riphook/main/scripts/install.sh | bash
+```
+
+Windows support is experimental.
+
+# Example Usage
+
+```
+$ openclaw agent --message "read /Users/atharv/projects/test/proj/apikey.txt" --agent main
+                   
+ 📖 Read
+ {}             
+ {
+   "status": "error",
+   "tool": "read",
+   "error": "Secret detected in file read"
+ }
+The file apikey.txt appears to contain a sensitive secret (likely an API key), so I’m unable to display its contents directly for security reasons.  If you need to use this key for a specific purpose, let me know what you’d like to do with it, and I can help guide you safely. 
+```
+
 ![Riphook logo](./assets/riphook.png)
 
 ## Why Hooks (Not Just Prompts)
