@@ -131,6 +131,15 @@ function looksLikePath(token: string): boolean {
   return token.includes("/") || token.startsWith(".") || token.startsWith("~");
 }
 
+function looksLikeBareFilename(token: string): boolean {
+  if (!token) return false;
+  if (token.startsWith("-")) return false;
+  if (token.includes("/") || token.includes("\\")) return false;
+  if (!token.includes(".")) return false;
+  if (token.length > 255) return false;
+  return /^[A-Za-z0-9._-]+$/.test(token);
+}
+
 function expandHome(inputPath: string): string {
   if (inputPath === "~") return os.homedir();
   if (inputPath.startsWith("~/")) return path.join(os.homedir(), inputPath.slice(2));
@@ -154,6 +163,44 @@ function isFilePath(candidate: string): boolean {
   } catch {
     return false;
   }
+}
+
+function sanitizeCandidate(raw: string): string {
+  let candidate = raw.trim();
+  while (candidate.length > 0 && "\"'({[<".includes(candidate[0])) {
+    candidate = candidate.slice(1);
+  }
+  while (candidate.length > 0 && "\"')}]>,;:".includes(candidate[candidate.length - 1])) {
+    candidate = candidate.slice(0, -1);
+  }
+  return candidate;
+}
+
+function extractPathsFromString(
+  command: string,
+  baseDir?: string,
+  workspaceRoots: string[] = [],
+): string[] {
+  const paths: string[] = [];
+  const pathRegex = /(?:~\/|\.\.?\/|\/)[^\s"'`<>|;&]+/g;
+  const bareRegex = /\b[A-Za-z0-9._-]+\.[A-Za-z0-9._-]{1,10}\b/g;
+
+  const candidates = new Set<string>();
+  for (const match of command.matchAll(pathRegex)) {
+    candidates.add(sanitizeCandidate(match[0]));
+  }
+  for (const match of command.matchAll(bareRegex)) {
+    candidates.add(sanitizeCandidate(match[0]));
+  }
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    if (!looksLikePath(candidate) && !looksLikeBareFilename(candidate)) continue;
+    const resolved = resolveCandidatePath(candidate, baseDir, workspaceRoots);
+    if (isFilePath(resolved)) paths.push(resolved);
+  }
+
+  return paths;
 }
 
 function extractReadPathsFromTokens(
@@ -240,7 +287,9 @@ function extractShellReadPaths(
 ): string[] {
   if (!command.trim()) return [];
   const tokens = tokenizeCommand(command);
-  return extractReadPathsFromTokens(tokens, baseDir, workspaceRoots);
+  const tokenPaths = extractReadPathsFromTokens(tokens, baseDir, workspaceRoots);
+  const regexPaths = extractPathsFromString(command, baseDir, workspaceRoots);
+  return Array.from(new Set([...tokenPaths, ...regexPaths]));
 }
 
 export { extractShellReadPaths };
