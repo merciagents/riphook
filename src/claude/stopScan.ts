@@ -140,13 +140,10 @@ function runClaudeStopScan(
         });
 
         if (!stopHookActive) {
+          const findingsJson = JSON.stringify(results);
           return {
             decision: "block",
-            reason: `${findingsSummary}. Review the findings and address any security issues.`,
-            hookSpecificOutput: {
-              hookEventName: "Stop",
-              additionalContext: JSON.stringify(results).slice(0, 2000),
-            },
+            reason: `${findingsSummary}. Review the findings and address any security issues. ${findingsJson}`,
           };
         }
 
